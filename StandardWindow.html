@@ -1,0 +1,30 @@
+<!Doctype html>
+<html lang="de">
+<head>
+	<title>Config NCT Tray Notifier</title>
+</head>
+<body>
+<div>
+	<form id="configList">
+	<h3>notify me by:</h3>
+	<input type="checkbox" id="nchat" onchange="changeVal(this.id,this.checked);" autofocus><label>chats</label><br>
+	<input type="checkbox" id="ncall"><label>calls</label><br>
+	</form>
+	
+	<script>
+		const electron = require('electron');
+		const {ipcRenderer} = electron;
+		
+		const nchat = document.querySelector('nchat');
+		nchat.addEventListener('onchange', changeVal);
+		const ncall = document.querySelector('ncall');
+		ncall.addEventListener('onchange', changeVal);
+		
+		function changeVal(i,v){
+			console.log(i + ' : ' + v);
+		}
+		
+	</script>
+</div>
+</body>
+</html>
