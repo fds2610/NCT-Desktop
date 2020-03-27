@@ -11,3 +11,5 @@ and commit regularly direct to master branch. As soon as others want to
 participate, i might rethink this approach.
 
 regards, FDS
+
+btw: this is an ELECTRON-project. See https://www.electronjs.org/ for details.
