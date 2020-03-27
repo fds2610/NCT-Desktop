@@ -4,24 +4,36 @@ const path = require('path');
 const fs = require('fs');
 const Tray = electron.Tray;
 const iconPath = path.join(__dirname, 'Nextcloud.ico');
-
 const {app, BrowserWindow, Menu} = electron;
 
-let DEBUG = (app.isPackaged) ? false:true;
+// custom constants
+const DEBUG = (app.isPackaged) ? false:true;
+const configFilePath = path.join(__dirname, 'config.ini');
 
+// custom variables
 let mainWindow;
 let addWindow;
 let tray = null;
 
 let ipc = electron.ipcMain;
-
+var {ncurl, ncuser, ncpwd} = "";
 
 // Listen for app to be readyState
 app.on('ready', function(){
 	sendToTray();
+	fs.readFile(configFilePath,'utf-8', (err, data) => {
+        if(err){
+            console.log("An error ocurred reading the file :" + err.message);
+            return;
+        }
+				dataarr = data.split("\r\n");
+				if(DEBUG) { console.debug(dataarr); }
+        // Change how to handle the file content
+				dataarr.forEach(splitMyData);
+    });
 });
+
 app.on('asynchronous-message', (event, newcontent) => {
-	let configFilePath = path.join(__dirname, 'config.ini');
 
 	fs.writeFile(configFilePath, newcontent, (err) => {
 		if(err) {
@@ -29,7 +41,7 @@ app.on('asynchronous-message', (event, newcontent) => {
 			return;
 		}
 	});
-	alert("Save successfull!");
+	console.log("Save successfull!");
 
 });
 
@@ -42,20 +54,41 @@ ipc.on('configChange', (event, message) => {
 	console.log(event + "/" + message );
 });
 
+function splitMyData(datastring) {
+	keys =  datastring.split("=",2);
+	// if(DEBUG) { console.debug(keys); }
+	switch(keys[0]) {
+		case 'ncurl':
+			ncurl = keys[1];
+			break;
+		case 'ncuser':
+			ncuser = keys[1];
+			break;
+		case 'ncpwd':
+			ncpwd = keys[1];
+			break;
+	}
+	// if(DEBUG) { console.debug(ncurl, ncuser, ncpwd); }
+}
+
 function createConfigWindow() {
+	cWWidth = (DEBUG) ? 800 : 400;
+	cWHeight = (DEBUG) ? 600 : 300;
 	configWindow = new BrowserWindow({
-		width: 800,
-		height: 800,
+		width: cWWidth,
+		height: cWHeight,
+		modal: true,
 		title: 'Config NCT Tray',
 		webPreferences: {
 			nodeIntegration: true
     }
-});
+	});
 
 	configWindow.loadURL(url.format({
 		pathname: path.join(__dirname, 'configWindow.html'),
 		protocol: 'file:',
-		slashes: true
+		slashes: true,
+		postData: "Key=Value"
 	})); 
 	if (mainMenuTemplate) {
 		const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
@@ -63,10 +96,15 @@ function createConfigWindow() {
 	} else {
 		Menu.setApplicationMenu(null);
 	};
-
 	//configWindow.toggleDevTools();
+	if(DEBUG) { configWindow.webContents.openDevTools(); }
+
+	let contents = configWindow.webContents;
+	console.debug(contents);
+	
+	
+	
 	configWindow.on('close', function(){
-		
 		configWindow=null;
 	});
 }
@@ -85,22 +123,6 @@ function sendToTray() {
 	
 //	tray.displayBalloon(trayBalloonOptions);
 
-}
-
-function createMainWindow() {
-	// create Window
-	mainWindow = new BrowserWindow({});
-
-	mainWindow.loadURL(url.format({
-		pathname: path.join(__dirname, 'mainWindow.html'),
-		protocol: 'file:',
-		slashes: true
-	})); 
-
-	// Build menu from template
-	const mainMenu = Menu.buildFromTemplate(mainMenuTemplate) || null;
-	Menu.setApplicationMenu(mainMenu);
-	
 }
 
 // creat menu template
