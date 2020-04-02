@@ -6,16 +6,14 @@
 	<script>
 		const electron = require('electron');
 		const {ipcRenderer} = electron;
-		console.debug(document);
 		function changeVal(i,v){
-			console.log(i + ' : ' + v);
+//			console.log(i + ' : ' + v);
 			const {ipcRenderer} = require('electron');
 			
-			let newcontent = "[Nextcloud-Talk]\n" + 'ncurl:' + document.getElementById('ncurl').value + '\nncuser:' + document.getElementById('ncuser').value + '\nncpwd:' + document.getElementById('ncpwd').value + "\n";
+			let newcontent = "[Nextcloud-Talk]\n" + 'ncurl:' + btoa(document.getElementById('ncurl').value) + '\nncuser:' + btoa(document.getElementById('ncuser').value) + '\nncpwd:' + btoa(document.getElementById('ncpwd').value) + "\n";
 			ipcRenderer.send('configChange', newcontent );
 			console.log(newcontent);
 		}
-
 	</script>
 </head>
 <body>
@@ -24,9 +22,20 @@
 	<h3>Config Settings</h3>
 	<input type="text" id="ncurl" onchange="changeVal(this.id,this.value);" autofocus><label>&nbsp;Nextcloud URL (https://...)</label><br><br>
 	<input type="text" id="ncuser" onchange="changeVal(this.id,this.value);"><label>&nbsp;Nextcloud UserID</label><br><br>
-	<input type="password" id="ncpwd" onchange="changeVal(this.id,this.value);"><label>&nbsp;Nextcloud Password</label><br><br>
+	<input type="text" id="ncpwd" onchange="changeVal(this.id,this.value);"><label>&nbsp;Nextcloud Password</label><br><br>
 	</form>
 	
 </div>
+<script>
+
+		console.log("Neu laden!");
+		let arg = ipcRenderer.sendSync('initConfigValues', 'connection' );
+		var CV = arg.split(":");
+		console.log(arg);
+		document.getElementById('ncurl').value = atob(CV[0]);
+		document.getElementById('ncuser').value = atob(CV[1]);
+		document.getElementById('ncpwd').value = atob(CV[2]);
+
+</script>
 </body>
 </html>
