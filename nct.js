@@ -268,6 +268,7 @@ function getXMLnotifications(pollResponse) {
 			}
 		}
 	}
+	
 	if(newNot == 1) {
 		newNot = 0;
 		console.log("Balloon fired. ");
