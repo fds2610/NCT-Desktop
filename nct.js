@@ -27,7 +27,7 @@ var dataarr, werte;
 var iconPath = path.join(__dirname, 'Nextcloud.ico');
 var APQUIT = 0;
 var ongoingPoll = 0;
-var interval;
+var myIntervall = {_destroyed : true};
 var nID = 0;
 var newNot = 0;
 var mSub,mLink,mMsg;
@@ -55,7 +55,15 @@ app.on('ready', function(){
 
 app.on('before-quit', function(event) {
 	console.log("QUIT: " + APQUIT);
-	if(APQUIT == 0) { event.preventDefault(); }
+	if(APQUIT == 0) { 
+		event.preventDefault(); 
+		if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
+		if(myIntervall._destroyed) {
+			NCPollOnce();
+		}
+	} else {
+		if(!myIntervall._destroyed) {clearInterval(myIntervall);}
+	}
 });
 
 // IPC from renderer
@@ -67,6 +75,10 @@ ipc.on('configChange', (event, newcontent) => {
 			return;
 		}
 	});
+	let dataarr = newcontent.split("\n");
+	// Change how to handle the file content
+	dataarr.forEach(splitMyData);
+	if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
 	console.log("Save successfull: "&configFilePath);
 });
 
@@ -97,6 +109,7 @@ function splitMyData(datastring) {
 }
 
 function createConfigWindow() {
+	if(!myIntervall._destroyed) {clearInterval(myIntervall);}
 	cWWidth = (DEBUG) ? 800 : 400;
 	cWHeight = (DEBUG) ? 600 : 300;
 	configWindow = new BrowserWindow({
@@ -178,7 +191,13 @@ function NCPollOnce() {
 		httpStatus = `${response.statusCode}`;
 		if (httpStatus != "200") {
 		  console.log(`STATUS: ${response.statusCode}`);
-		  console.log(`HEADERS: ${JSON.stringify(response.headers)}`);
+			sCode = `${response.statusCode}`;
+		  //console.log(`HEADERS: ${JSON.stringify(response.headers)}`);
+			let trayBalloonOptions = new Object;
+			trayBalloonOptions.title="NCT Poll-Error";
+			trayBalloonOptions.content="Server-Response: "+sCode;
+			trayBalloonOptions.icon=iconPath;
+			tray.displayBalloon(trayBalloonOptions);
 		} else {
 			response.on('data', (chunk) => {
 				//console.log(`BODY: ${chunk}`)
@@ -187,7 +206,9 @@ function NCPollOnce() {
 			response.on('end', () => {
 				ongoingPoll = 0;
 				console.log('No more data in response.')
-				setIntervalPromise(NCPollRegular, 10*1000,'foobar').then((value) => {});
+//				setIntervalPromise(NCPollRegular, 10*1000,'foobar').then((value) => {});
+				myIntervall = setInterval(NCPollRegular, 10*1000);
+				console.log("PollOnce end");
 			});
 		}
 	})
@@ -195,9 +216,13 @@ function NCPollOnce() {
 
 }
 
-function NCPollRegular(value) {
-	if (ongoingPoll == 1) {	
-		console.log("Abfrage läuft noch... Poll verschoben."); 
+function NCPollRegular() {
+	//console.debug(myIntervall);
+
+	if (ongoingPoll > 0) {	
+		console.log("Abfrage \#"+ongoingPoll+" läuft noch... Poll verschoben."); 
+		ongoingPoll++;
+		if (ongoingPoll>5) { ongoingPoll=0;}
 	} else {
 		let u1 = Buffer.from(ncurl,'base64').toString('ascii');
 		let u2 = Buffer.from(ncuser,'base64').toString('ascii');
@@ -215,16 +240,30 @@ function NCPollRegular(value) {
 			}
 		});
 		request.on('response', (response) => {
-			//console.log(`STATUS: ${response.statusCode}`)
-			//console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
-			response.on('data', (chunk) => {
-				//console.log(`BODY: ${chunk}`);
-				getXMLnotifications(`${chunk}`);
-			})
-			response.on('end', () => {
-				ongoingPoll = 0;
-				//console.log('No more data in response.')
-			})
+			if(DEBUG) { console.log(`STATUS: ${response.statusCode}`); }
+			sCode = `${response.statusCode}`;
+			if (sCode != '200') {
+				clearInterval(myIntervall);
+				let trayBalloonOptions = new Object;
+				trayBalloonOptions.title="NCT Poll-Error";
+				trayBalloonOptions.content="Server-Response: "+sCode+"\nclick to open config";
+				trayBalloonOptions.icon=iconPath;
+				tray.displayBalloon(trayBalloonOptions);
+				tray.on('balloon-click', function() {
+					//tray.removeBalloon();
+				createConfigWindow();
+				});
+			} else {
+				//console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
+				response.on('data', (chunk) => {
+					//console.log(`BODY: ${chunk}`);
+					getXMLnotifications(`${chunk}`);
+				});
+				response.on('end', () => {
+					ongoingPoll = 0;
+					//console.log('No more data in response.')
+				});
+			}
 		})
 		request.end()
 	}
@@ -251,7 +290,7 @@ function getXMLnotifications(pollResponse) {
 				nID=numb;
 				getLines=1;
 				newNot = 1;
-				console.debug(i + " get " + numb);
+				//console.debug(i + " get " + numb);
 			}
 		} else {
 			if(getLines==1) {
@@ -274,7 +313,7 @@ function getXMLnotifications(pollResponse) {
 		console.log("Balloon fired. ");
 		let trayBalloonOptions = new Object;
 		trayBalloonOptions.title=mSub;
-		trayBalloonOptions.content=mLink;
+		trayBalloonOptions.content=mMsg; // +"\n"+mLink;
 		trayBalloonOptions.icon=iconPath;
 		tray.displayBalloon(trayBalloonOptions);
 		tray.on('balloon-click', function() {
@@ -300,7 +339,7 @@ let mainMenuTemplate = [
 ];
 
 //developer Tools Items
-if (DEBUG) { // app.isPackaged) { //process.env.NODE_ENV != 'production') {
+if (DEBUG) { 
 	if(process.platform == 'darwin'){
 		// MacOS Spezialbehandlung von Menüs
 		mainMenuTemplate.unshift({});
@@ -322,7 +361,7 @@ if (DEBUG) { // app.isPackaged) { //process.env.NODE_ENV != 'production') {
 			{ label: 'Quit App', 
 				click() {
 					APQUIT=1;
-					tray = null;
+					//tray = null;
 					app.quit();
 				}
 			}
@@ -335,7 +374,7 @@ if (DEBUG) { // app.isPackaged) { //process.env.NODE_ENV != 'production') {
 
 //create TrayMenu
 const trayMenuTemplate = [
-	{ label: 'restore window', 
+	{ label: 'configure', 
 		click() {
 			createConfigWindow();
 		}

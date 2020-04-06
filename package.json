@@ -1,6 +1,7 @@
 {
   "name": "nct-desktop",
-  "version": "0.0.2",
+  "version": "0.0.4",
+	"productName": "NCT Notifier",
   "description": "Nextcloud Talk System Tray 4 Windows",
   "main": "nct.js",
   "scripts": {
@@ -15,5 +16,8 @@
   "dependencies": {
     "electron": "^8.2.0",
     "electron-version": "^2.0.1"
+  },
+  "devDependencies": {
+    "electron-packager": "^14.2.1"
   }
 }
