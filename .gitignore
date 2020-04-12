@@ -1,3 +1,5 @@
 /node_modules/
 /nct-desktop-win32-x64/
+/nct-desktop-darwin-x64/
+nct-desktop-darwin-x64.zip
 config.ini

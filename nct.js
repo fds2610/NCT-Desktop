@@ -6,6 +6,7 @@ const Tray = electron.Tray;
 const {app, BrowserView, BrowserWindow, Menu} = electron;
 const { net } = require('electron');
 const util = require('util');
+
 //const electronVersion = require('electron-version')
 //electronVersion(function (err, v) {
 //  console.log(err, v) // null 'v0.33.4'
@@ -19,7 +20,8 @@ const setIntervalPromise = util.promisify(setInterval);
 // custom variables
 let mainWindow;
 let addWindow;
-let tray = null;
+var tray = null;
+var trayerror=true;
 
 let ipc = electron.ipcMain;
 var ncurl="", ncuser="", ncpwd="";
@@ -34,7 +36,7 @@ var mSub,mLink,mMsg;
 
 // Listen for app to be readyState
 app.on('ready', function(){
-	sendToTray("OK");
+	sendToTray("starting...");
 	// read config data into global variables
 	fs.readFile(configFilePath,'utf-8', (err, data) => {
 		if(err){
@@ -154,13 +156,14 @@ function createTalkWindow(url) {
 }
 
 function sendToTray(status) {
-	if(status == "OK") {
-		iconPath = path.join(__dirname, 'talk1.png');
+	if(status == "green") {
+		iconPath = path.join(__dirname, 'talk2.png');
 	} else {
-		iconPath = path.join(__dirname, 'Nextcloud.ico');
+		iconPath = path.join(__dirname, 'talk1.png');
 	}
+	now = new Date();
 	tray = new Tray(iconPath);
-	tray.setToolTip('Nextcloud Talk Notifier');
+	tray.setToolTip('Nextcloud Talk Notifier ' + status + " " + now);
 	const ctxMenu = Menu.buildFromTemplate(trayMenuTemplate);
 	tray.setContextMenu(ctxMenu);
 	tray.on('click', function() {
@@ -186,6 +189,12 @@ function NCPollOnce() {
 		headers: {
 			"Authorization": auth
 		}
+	});
+	request.on('error', (error) => {
+		console.log(`${error}`);
+		ongoingPoll = 0;
+		myIntervall = setInterval(NCPollRegular, 10*1000);
+		console.log("PollOnce end with error");
 	});
 	request.on('response', (response) => {
 		httpStatus = `${response.statusCode}`;
@@ -239,6 +248,14 @@ function NCPollRegular() {
 				"Authorization": auth
 			}
 		});
+		request.on('error', (error) => {
+			console.log(`${error}`);
+			ongoingPoll = 0;
+				tray.destroy();
+				sendToTray("blue");
+				trayerror=true;
+			tray.setToolTip('Nextcloud Talk Notifier: ERROR');
+		});
 		request.on('response', (response) => {
 			if(DEBUG) { console.log(`STATUS: ${response.statusCode}`); }
 			sCode = `${response.statusCode}`;
@@ -254,6 +271,14 @@ function NCPollRegular() {
 				createConfigWindow();
 				});
 			} else {
+				if(trayerror){
+					tray.destroy();
+					sendToTray("green");
+					trayerror=false;
+				} else {
+					now = new Date();
+					tray.setToolTip('Nextcloud Talk Notifier OK ' + now);
+				}
 				//console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
 				response.on('data', (chunk) => {
 					//console.log(`BODY: ${chunk}`);
