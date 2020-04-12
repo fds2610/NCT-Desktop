@@ -10,9 +10,9 @@ using GITHUB as a source backup, so i will not create too many branches
 and commit regularly direct to master branch. As soon as others want to
 participate, i might rethink this approach.
 
-Furthermore I decided to provide experimental, unsigned binaries. Currently
-the windows package resides directly in this repo, but the darwin (MAC OSX)
-is more than 100MB and posted here: code.schepmann.de/NCT-Desktop/nct-desktop-darwin-x64.zip
+Furthermore I decided to provide experimental, unsigned binaries. 
+MAC OSX here: code.schepmann.de/NCT-Desktop/nct-desktop-darwin-x64.zip
+Win x64 here: code.schepmann.de/NCT-Desktop/nct-desktop-win32-x64.zip
 
 regards, FDS
 
