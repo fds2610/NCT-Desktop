@@ -10,6 +10,10 @@ using GITHUB as a source backup, so i will not create too many branches
 and commit regularly direct to master branch. As soon as others want to
 participate, i might rethink this approach.
 
+Furthermore I decided to provide experimental, unsigned binaries. Currently
+the windows package resides directly in this repo, but the darwin (MAC OSX)
+is more than 100MB and posted here: code.schepmann.de/NCT-Desktop/nct-desktop-darwin-x64.zip
+
 regards, FDS
 
 btw: this is an ELECTRON-project. See https://www.electronjs.org/ for details.
