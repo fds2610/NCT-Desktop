@@ -3,9 +3,10 @@ const url = require('url');
 const path = require('path');
 const fs = require('fs');
 const Tray = electron.Tray;
-const {app, BrowserView, BrowserWindow, Menu} = electron;
+const {app, BrowserView, BrowserWindow, Menu, Notification} = electron;
 const { net } = require('electron');
 const util = require('util');
+//const notifier = require('node-notifier');
 
 //const electronVersion = require('electron-version')
 //electronVersion(function (err, v) {
@@ -22,6 +23,7 @@ let mainWindow;
 let addWindow;
 var tray = null;
 var trayerror=true;
+var notify;
 
 let ipc = electron.ipcMain;
 var ncurl="", ncuser="", ncpwd="";
@@ -205,11 +207,12 @@ function NCPollOnce() {
 		  console.log(`STATUS: ${response.statusCode}`);
 			sCode = `${response.statusCode}`;
 		  //console.log(`HEADERS: ${JSON.stringify(response.headers)}`);
-			let trayBalloonOptions = new Object;
-			trayBalloonOptions.title="NCT Poll-Error";
-			trayBalloonOptions.content="Server-Response: "+sCode;
-			trayBalloonOptions.icon=iconPath;
-			tray.displayBalloon(trayBalloonOptions);
+			fireBalloon("NCT Poll-Error", "Server-Response: "+sCode, "");
+//			let trayBalloonOptions = new Object;
+//			trayBalloonOptions.title="NCT Poll-Error";
+//			trayBalloonOptions.content="Server-Response: "+sCode;
+//			trayBalloonOptions.icon=iconPath;
+//			tray.displayBalloon(trayBalloonOptions);
 		} else {
 			response.on('data', (chunk) => {
 				//console.log(`BODY: ${chunk}`)
@@ -264,15 +267,16 @@ function NCPollRegular() {
 			sCode = `${response.statusCode}`;
 			if (sCode != '200') {
 				clearInterval(myIntervall);
-				let trayBalloonOptions = new Object;
-				trayBalloonOptions.title="NCT Poll-Error";
-				trayBalloonOptions.content="Server-Response: "+sCode+"\nclick to open config";
-				trayBalloonOptions.icon=iconPath;
-				tray.displayBalloon(trayBalloonOptions);
-				tray.on('balloon-click', function() {
-					//tray.removeBalloon();
-				createConfigWindow();
-				});
+				fireBalloon("NCT Poll-Error", "Server-Response: "+sCode+"\nclick to open config", "");
+//				let trayBalloonOptions = new Object;
+//				trayBalloonOptions.title="NCT Poll-Error";
+//				trayBalloonOptions.content="Server-Response: "+sCode+"\nclick to open config";
+//				trayBalloonOptions.icon=iconPath;
+//				tray.displayBalloon(trayBalloonOptions);
+//				tray.on('balloon-click', function() {
+//					//tray.removeBalloon();
+//				createConfigWindow();
+//				});
 			} else {
 				if(trayerror){
 					tray.destroy();
@@ -335,8 +339,33 @@ function getXMLnotifications(pollResponse) {
 			}
 		}
 	}
-	
+
 	if(newNot == 1) {
+		newNot = 0;
+		console.log("Balloon fired. ");
+		fireBalloon(mSub, mMsg, mLink);
+	}
+}
+
+function fireBalloon(subject, message, link) {
+
+		notify = new Notification({
+			title : subject,
+			body  : message,
+			icon  : iconPath,
+			timeoutType : 'never'
+		});
+		notify.show();
+		notify.on('click', function() {
+			console.log("Clicked the Notification...");
+		});
+	if(0 == 1) {
+		notifier.notify({
+			title: mSub,
+			message: mMsg
+		});
+	}
+	if(0 == 1) {
 		newNot = 0;
 		console.log("Balloon fired. ");
 		let trayBalloonOptions = new Object;
@@ -355,6 +384,7 @@ function getXMLnotifications(pollResponse) {
 		
 	}
 }
+
 
 // create menu template
 let mainMenuTemplate = [
