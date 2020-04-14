@@ -1,1 +1,0 @@
-electron-packager . nct-desktop --overwrite
