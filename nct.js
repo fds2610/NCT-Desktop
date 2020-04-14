@@ -33,9 +33,12 @@ var myIntervall = {_destroyed : true};
 var nID = 0;
 var newNot = 0;
 var mSub,mLink,mMsg;
+var appVersion = app.getVersion();
 
 // Listen for app to be readyState
 app.on('ready', function(){
+	trayMenuTemplate.unshift({type  : 'separator'});
+	trayMenuTemplate.unshift({label : appVersion, enabled : false});
 	sendToTray("starting...");
 	// read config data into global variables
 	fs.readFile(configFilePath,'utf-8', (err, data) => {
