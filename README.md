@@ -12,7 +12,7 @@ participate, i might rethink this approach.
 
 Furthermore I decided to provide experimental, unsigned binaries. 
 MAC OSX here: code.schepmann.de/NCT-Desktop/nct-desktop-darwin-x64.zip
-Win x64 here: code.schepmann.de/NCT-Desktop/nct-desktop-win32-x64.zip
+Win x64 here: code.schepmann.de/NCT-Desktop/nct-desktop-win32-ia32.zip
 Lin x64 here: code.schepmann.de/NCT-Desktop/nct-desktop-linux-x64.zip
 
 regards, FDS
