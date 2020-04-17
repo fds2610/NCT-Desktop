@@ -163,7 +163,9 @@ function createTalkWindow(url) {
 function sendToTray(status) {
 	if(status == "green") {
 		iconPath = path.join(__dirname, 'talk2.png');
-	} else {
+	} else if (status == "newnot") {
+		iconPath = path.join(__dirname, 'talk3.png');
+	}	else {
 		iconPath = path.join(__dirname, 'talk1.png');
 	}
 	now = new Date();
@@ -342,6 +344,8 @@ function getXMLnotifications(pollResponse) {
 
 	if(newNot == 1) {
 		newNot = 0;
+		tray.destroy();
+		sendToTray("newnot");
 		console.log("Balloon fired. ");
 		fireBalloon(mSub, mMsg, mLink);
 	}
@@ -352,7 +356,7 @@ function fireBalloon(subject, message, link) {
 		notify = new Notification({
 			title : subject,
 			body  : message,
-			icon  : iconPath,
+			icon  : path.join(__dirname, 'talk2.png'),
 			timeoutType : 'never'
 		});
 		notify.show();
