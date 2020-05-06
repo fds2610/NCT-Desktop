@@ -42,6 +42,8 @@ app.on('ready', function(){
 	trayMenuTemplate.unshift({type  : 'separator'});
 	trayMenuTemplate.unshift({label : appVersion, enabled : false});
 	sendToTray("starting...");
+	console.log(process.platform);
+	
 	// read config data into global variables
 	fs.readFile(configFilePath,'utf-8', (err, data) => {
 		if(err){
@@ -180,6 +182,12 @@ function sendToTray(status) {
 //		createTalkWindow(mLink);
 //	});
 
+}
+
+function clear_Icon () {
+	tray.destroy();
+	sendToTray("green");
+	console.log("Trayicon re-set. ");
 }
 
 function NCPollOnce() {
@@ -352,24 +360,7 @@ function getXMLnotifications(pollResponse) {
 }
 
 function fireBalloon(subject, message, link) {
-
-		notify = new Notification({
-			title : subject,
-			body  : message,
-			icon  : path.join(__dirname, 'talk2.png'),
-			timeoutType : 'never'
-		});
-		notify.show();
-		notify.on('click', function() {
-			console.log("Clicked the Notification...");
-		});
-	if(0 == 1) {
-		notifier.notify({
-			title: mSub,
-			message: mMsg
-		});
-	}
-	if(0 == 1) {
+	if(process.platform == "win32") {
 		newNot = 0;
 		console.log("Balloon fired. ");
 		let trayBalloonOptions = new Object;
@@ -380,13 +371,34 @@ function fireBalloon(subject, message, link) {
 		tray.on('balloon-click', function() {
 			//tray.removeBalloon();
 			console.log("Clicked the Balloon...");
+			createTalkWindow(link);
 		});
 		tray.on('balloon-closed', function() {
 			//tray.removeBalloon();
 			console.log("Balloon closed...");
 		});
 		
+	} else {
+
+		notify = new Notification({
+			title : subject,
+			body  : message,
+			icon  : path.join(__dirname, 'talk2.png'),
+			timeoutType : 'never'
+		});
+		notify.show();
+		notify.on('click', function() {
+			console.log("Clicked the Notification...");
+			createTalkWindow(link);
+		});
 	}
+	if(0 == 1) {
+		notifier.notify({
+			title: mSub,
+			message: mMsg
+		});
+	}
+
 }
 
 
@@ -436,6 +448,11 @@ if (DEBUG) {
 
 //create TrayMenu
 const trayMenuTemplate = [
+	{ label: 'clear Icon', 
+		click() {
+			clear_Icon();
+		}
+	},
 	{ label: 'configure', 
 		click() {
 			createConfigWindow();
