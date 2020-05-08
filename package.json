@@ -1,7 +1,7 @@
 {
   "name": "nct-desktop",
   "version": "0.0.7",
-	"productName": "NCT Notifier",
+  "productName": "NCT Notifier",
   "description": "Nextcloud Talk System Tray 4 Windows",
   "main": "nct.js",
   "scripts": {
@@ -19,5 +19,9 @@
   },
   "devDependencies": {
     "electron-packager": "^14.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fds2610/NCT-Desktop.git"
   }
 }
