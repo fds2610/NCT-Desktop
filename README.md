@@ -1,6 +1,13 @@
 # NCT-Desktop
 Desktop-App for notifying Nextcloud-Talk Events
 
+This App installs a Tray-Icon and on regular base pulls the NC server
+if new notifications have arrived. If yes, a local notification is shown
+and the icon changes. clicking the notification should open a browser 
+window with the server-notification.
+
+Currently credentials have to be stored unencrypted locally.
+
 This is my very first GIT repository and my very first Desktop App.
 please comment to me whatever your might want to express, but be polite.
 
