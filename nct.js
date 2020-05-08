@@ -39,6 +39,14 @@ var appVersion = app.getVersion();
 
 // Listen for app to be readyState
 app.on('ready', function(){
+
+	trayMenuTemplate.unshift(
+		{ label: 'open NC in browser', 
+			click() {
+				createTalkWindow(mLink);
+			}
+		}
+	);
 	trayMenuTemplate.unshift({type  : 'separator'});
 	trayMenuTemplate.unshift({label : appVersion, enabled : false});
 	sendToTray("starting...");
@@ -56,7 +64,8 @@ app.on('ready', function(){
 		// Change how to handle the file content
 		dataarr.forEach(splitMyData);
 		if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
-		
+		mLink = "https://" + Buffer.from(ncurl,'base64').toString('ascii');
+		if(DEBUG) { console.log("url: "+mLink); }
 		NCPollOnce();
   });
 
@@ -152,6 +161,9 @@ function createConfigWindow() {
 }
 
 function createTalkWindow(url) {
+	if (url == "") { url = "https://" + mLink; }
+	if(DEBUG) { console.log("url to open: " + url); }
+	clear_Icon();
 	let win = new BrowserWindow({ width: 800, height: 600 });
 	win.on('closed', () => {
 		win = null;
@@ -177,6 +189,9 @@ function sendToTray(status) {
 	tray.setContextMenu(ctxMenu);
 	tray.on('click', function() {
 		tray.popUpContextMenu([ctxMenu]);
+	});
+	tray.on('double-click', function() {
+		createTalkWindow(mLink);
 	});
 //	tray.on('balloon-click', function() {
 //		createTalkWindow(mLink);
@@ -318,7 +333,7 @@ function getXMLnotifications(pollResponse) {
 	let arrLines = pollResponse.split("\n");
 	let getLines = 0;
 	mSub="";
-	mLink="";
+	// mLink="";
 	mMsg="";
 	newNot = 0;
 	for(i=0; i<arrLines.length; i++){
@@ -364,8 +379,8 @@ function fireBalloon(subject, message, link) {
 		newNot = 0;
 		console.log("Balloon fired. ");
 		let trayBalloonOptions = new Object;
-		trayBalloonOptions.title=mSub;
-		trayBalloonOptions.content=mMsg; // +"\n"+mLink;
+		trayBalloonOptions.title=subject;
+		trayBalloonOptions.content=message; // +"\n"+mLink;
 		trayBalloonOptions.icon=iconPath;
 		tray.displayBalloon(trayBalloonOptions);
 		tray.on('balloon-click', function() {
@@ -400,6 +415,7 @@ function fireBalloon(subject, message, link) {
 	}
 
 }
+
 
 
 // create menu template
@@ -464,6 +480,6 @@ const trayMenuTemplate = [
 			tray = null;
 			app.quit();
 		}
-	},
+	}
 	
 ];
