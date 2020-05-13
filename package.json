@@ -1,6 +1,6 @@
 {
   "name": "nct-desktop",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "productName": "NCT Notifier",
   "description": "Nextcloud Talk System Tray 4 Windows",
   "main": "nct.js",

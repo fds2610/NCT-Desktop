@@ -5,6 +5,7 @@ const fs = require('fs');
 const Tray = electron.Tray;
 const {app, BrowserView, BrowserWindow, Menu, Notification} = electron;
 const { net } = require('electron');
+const shell = require('electron').shell;
 const util = require('util');
 //const notifier = require('node-notifier');
 
@@ -164,14 +165,18 @@ function createTalkWindow(url) {
 	if (url == "") { url = "https://" + mLink; }
 	if(DEBUG) { console.log("url to open: " + url); }
 	clear_Icon();
-	let win = new BrowserWindow({ width: 800, height: 600 });
-	win.on('closed', () => {
-		win = null;
-	});
-	let view = new BrowserView();
-	win.setBrowserView(view);
-	view.setBounds({ x: 0, y: 0, width: 800, height: 600 });
-	view.webContents.loadURL(url);
+	if (1 == 1) {
+		shell.openExternal(url);
+	} else {
+		let win = new BrowserWindow({ width: 800, height: 600 });
+		win.on('closed', () => {
+			win = null;
+		});
+		let view = new BrowserView();
+		win.setBrowserView(view);
+		view.setBounds({ x: 0, y: 0, width: 800, height: 600 });
+		view.webContents.loadURL(url);
+	}
 }
 
 function sendToTray(status) {
@@ -212,6 +217,8 @@ function NCPollOnce() {
 	let auth = "Basic " + Buffer.from(u2 + ":" + pw,'ascii').toString('base64');
 	if( u1.substr(u1.length - 1) == '\\') { u1 = u1.substr(0, u1.length - 1); }
 	let url = 'https://'+u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
+//		console.log("URL: "+ url);
+//		console.log("auth: "+ auth + " - " + u2 + ":" + pw);
 	ongoingPoll = 1;
 	let request = net.request({
 		method: 'GET',
@@ -270,7 +277,8 @@ function NCPollRegular() {
 		let auth = "Basic " + Buffer.from(u2 + ":" + pw,'ascii').toString('base64');
 		if( u1.substr(u1.length - 1) == '\\') { u1 = u1.substr(0, u1.length - 1); }
 		let url = 'https://'+u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
-		//console.log("URL: "+ url);
+//		console.log("URL: "+ url);
+//		console.log("auth: "+ auth + " - " + u2 + ":" + pw);
 		ongoingPoll = 1;
 		let request = net.request({
 			method: 'GET',
@@ -303,6 +311,7 @@ function NCPollRegular() {
 //				createConfigWindow();
 //				});
 			} else {
+				//console.debug("response: " +response);
 				if(trayerror){
 					tray.destroy();
 					sendToTray("green");
@@ -343,7 +352,7 @@ function getXMLnotifications(pollResponse) {
 			getLines=0;
 			let numb=al.slice(al.search(">")+1,-18).valueOf();
 			// console.debug(numb + " numb " + al.slice(al.search(">")+1,-18));
-			if(numb>nID){
+			if(numb>=nID){
 				nID=numb;
 				getLines=1;
 				newNot = 1;
@@ -364,12 +373,12 @@ function getXMLnotifications(pollResponse) {
 			}
 		}
 	}
-
+	//console.debug(i + " nID " + nID);
 	if(newNot == 1) {
 		newNot = 0;
 		tray.destroy();
 		sendToTray("newnot");
-		console.log("Balloon fired. ");
+		//console.log("Balloon fired. ");
 		fireBalloon(mSub, mMsg, mLink);
 	}
 }
