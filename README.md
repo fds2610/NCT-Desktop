@@ -6,7 +6,8 @@ if new notifications have arrived. If yes, a local notification is shown
 and the icon changes. clicking the notification should open a browser 
 window with the server-notification.
 
-Currently credentials have to be stored unencrypted locally.
+Currently credentials have to be stored unencrypted locally. Though, 
+inbetween, i managed to use NC-login-V2 and we are storing an App-pw.
 
 This is my very first GIT repository and my very first Desktop App.
 please comment to me whatever your might want to express, but be polite.

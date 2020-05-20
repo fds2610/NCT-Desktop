@@ -5,6 +5,7 @@ const fs = require('fs');
 const Tray = electron.Tray;
 const {app, BrowserView, BrowserWindow, Menu, Notification} = electron;
 const { net } = require('electron');
+const requestlib = require('request');
 const util = require('util');
 //const notifier = require('node-notifier');
 
@@ -24,6 +25,7 @@ let addWindow;
 var tray = null;
 var trayerror=true;
 var notify;
+var jd;
 
 let ipc = electron.ipcMain;
 var ncurl="", ncuser="", ncpwd="";
@@ -31,6 +33,7 @@ var dataarr, werte;
 var iconPath = path.join(__dirname, 'Nextcloud.ico');
 var APQUIT = 0;
 var ongoingPoll = 0;
+var ongoingTokenPoll = 0;
 var myIntervall = {_destroyed : true};
 var nID = 0;
 var newNot = 0;
@@ -64,7 +67,8 @@ app.on('ready', function(){
 		// Change how to handle the file content
 		dataarr.forEach(splitMyData);
 		if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
-		mLink = "https://" + Buffer.from(ncurl,'base64').toString('ascii');
+		mLink = Buffer.from(ncurl,'base64').toString('ascii');
+		if (mLink.indexOf("https://") < 0) {mLink = "https://" + mLink;}
 		if(DEBUG) { console.log("url: "+mLink); }
 		NCPollOnce();
   });
@@ -87,17 +91,7 @@ app.on('before-quit', function(event) {
 // IPC from renderer
 // has there been a change in config items ?
 ipc.on('configChange', (event, newcontent) => {
-	fs.writeFile(configFilePath, newcontent, (err) => {
-		if(err) {
-			console.log("Cannot update file...",err);
-			return;
-		}
-	});
-	let dataarr = newcontent.split("\n");
-	// Change how to handle the file content
-	dataarr.forEach(splitMyData);
-	if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
-	console.log("Save successfull: "&configFilePath);
+	writenewconfig(newcontent);
 });
 
 // new Windows needs initial config items
@@ -111,6 +105,20 @@ ipc.on('initConfigValues', (event, arg) => {
 });
 
 // tools
+function writeNewConfig(content) {
+	fs.writeFile(configFilePath, content, (err) => {
+		if(err) {
+			console.log("Cannot update file...",err);
+			return;
+		}
+	});
+	let dataarr = content.split("\n");
+	// Change how to handle the file content
+	dataarr.forEach(splitMyData);
+	if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
+	console.log("Save successfull: "&configFilePath);	
+}
+
 function splitMyData(datastring) {
 	keys =  datastring.split(":",2);
 	switch(keys[0]) {
@@ -123,6 +131,120 @@ function splitMyData(datastring) {
 		case 'ncpwd':
 			ncpwd = keys[1];
 			break;
+	}
+}
+
+function createCredentialsWindow() {
+	let url = Buffer.from(ncurl,'base64').toString('ascii') + "/index.php/login/v2" ;
+	if (url.indexOf("https://") < 0) {url = "https://" + url;}
+	var pollTokenIntervall;
+	const request = net.request({
+		method: 'POST',
+		url: url,
+		redirect: "follow"
+	});
+	request.on('error', (error) => {
+		console.log(`NCT-CredWin-Error: ${error}`);
+		ongoingConfigPoll = 0;
+		console.log("AUTH POST 1 ended with error");
+	});
+	request.on('response', (response) => {
+		httpStatus = `${response.statusCode}`;
+		if (httpStatus != "200") {
+		  console.log(`AUTH POST 1 STATUS: ${response.statusCode}`);
+			sCode = `${response.statusCode}`;
+		} else {
+			response.on('data', (chunk) => {
+				jd = JSON.parse(`${chunk}`);
+				console.log("Token: " + jd.poll.token);
+				console.log("EP: " + jd.poll.endpoint);
+				console.log("url: " + jd.login);
+				
+				cWWidth = (DEBUG) ? 1200 : 600;
+				cWHeight = (DEBUG) ? 800 : 800;
+				configWindow = new BrowserWindow({
+					width: cWWidth,
+					height: cWHeight,
+					modal: true,
+					title: 'Config NCT Tray',
+					webPreferences: {
+						nodeIntegration: true
+					}
+				});
+
+				configWindow.loadURL(jd.login); 
+				if (mainMenuTemplate) {
+					const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
+					Menu.setApplicationMenu(mainMenu);
+				} else {
+					Menu.setApplicationMenu(null);
+				};
+				//configWindow.toggleDevTools();
+				if(DEBUG) { configWindow.webContents.openDevTools(); }
+
+				configWindow.on('close', function(){
+					configWindow=null;
+					if (typeof pollTokenIntervall !== 'undefined') { if(!pollTokenIntervall._destroyed) {clearInterval(pollTokenIntervall);} }
+				});
+				
+				//
+				// request({ url: url, method: 'PUT', json: {foo: "bar", woo: "car"}}, callback)
+				//
+				// https://nodejs.dev/make-an-http-post-request-using-nodejs
+				//
+				if(!myIntervall._destroyed) {clearInterval(myIntervall);}
+				pollTokenIntervall = setInterval(pollToken, 2*1000);
+
+
+			});
+		}
+	});
+	request.end();
+
+	
+}
+
+function pollToken () {
+	var host = Buffer.from(ncurl,'base64').toString('ascii');
+	if (ongoingTokenPoll >0) {
+		console.log("Tokenpoll ongoing.. "+ongoingTokenPoll+" wait");
+		ongoingTokenPoll++;
+	} else {
+		let pstat = "";
+		let url2 = host + "/index.php/login/v2/poll" ;
+		let url = jd.poll.endpoint ;
+		var postData = 'token=' + jd.poll.token;
+		console.log("Polling: " + postData + " from url: " + url);
+		ongoingTokenPoll=1;
+		requestlib({ 
+				body: postData, 
+				followAllRedirects: true,
+				headers: {
+					 'Content-Type': 'application/x-www-form-urlencoded',
+					 'Content-Length': postData.length,
+//					 'Referer': url2,
+					 'Host': host,
+					 'User-Agent': 'NCT Desktop' + appVersion,
+					 'X-Requested-With': 'XMLHttpRequest' },
+				method: 'POST',
+				url: url}, 
+			function cb (error, response, body) {
+					ongoingTokenPoll = 0;
+					if (!error && response.statusCode == 200) {
+							console.log('Success: \n'+body);
+							let cred = JSON.parse(body);
+							console.log("JSON ****** \nServer: "+cred.server+"\nPW: "+cred.appPassword);
+							newcontent="[Nextcloud-Talk]\nncurl:"+Buffer.from(cred.server,'ascii').toString('base64');
+							newcontent=newcontent+"\nncuser:"+Buffer.from(cred.loginName,'ascii').toString('base64');
+							newcontent=newcontent+"\nncpwd:"+Buffer.from(cred.appPassword,'ascii').toString('base64')+"\n";
+							writeNewConfig(newcontent);
+							if (typeof pollTokenIntervall !== 'undefined') { if(!pollTokenIntervall._destroyed) {clearInterval(pollTokenIntervall);} }
+					} else {
+							console.log("PullToken callback: " + error + " \n");
+					}
+			}
+		);
+		console.log("Request sent. HTTP-Status: "+ pstat);
 	}
 }
 
@@ -157,11 +279,13 @@ function createConfigWindow() {
 
 	configWindow.on('close', function(){
 		configWindow=null;
+		myIntervall = setInterval(NCPollRegular, 10*1000);
 	});
 }
 
 function createTalkWindow(url) {
-	if (url == "") { url = "https://" + mLink; }
+	if (url == "") { url = mLink; }
+	if (url.indexOf("https://") < 0) {url = "https://" + url;}
 	if(DEBUG) { console.log("url to open: " + url); }
 	clear_Icon();
 	let win = new BrowserWindow({ width: 800, height: 600 });
@@ -211,7 +335,9 @@ function NCPollOnce() {
 	let pw = Buffer.from(ncpwd,'base64').toString('ascii');
 	let auth = "Basic " + Buffer.from(u2 + ":" + pw,'ascii').toString('base64');
 	if( u1.substr(u1.length - 1) == '\\') { u1 = u1.substr(0, u1.length - 1); }
-	let url = 'https://'+u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
+	let url = u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
+	console.log("url: "+url+" Indexof: "+url.indexOf("https://"));
+	if (url.indexOf("https://") < 0) {url = "https://" + url;}
 	ongoingPoll = 1;
 	let request = net.request({
 		method: 'GET',
@@ -221,7 +347,7 @@ function NCPollOnce() {
 		}
 	});
 	request.on('error', (error) => {
-		console.log(`${error}`);
+		console.log(`NCT-PollOnce1-Error: ${error}`);
 		ongoingPoll = 0;
 		myIntervall = setInterval(NCPollRegular, 10*1000);
 		console.log("PollOnce end with error");
@@ -229,7 +355,7 @@ function NCPollOnce() {
 	request.on('response', (response) => {
 		httpStatus = `${response.statusCode}`;
 		if (httpStatus != "200") {
-		  console.log(`STATUS: ${response.statusCode}`);
+		  console.log(`NCT-PollOnce-Status: ${response.statusCode}`);
 			sCode = `${response.statusCode}`;
 		  //console.log(`HEADERS: ${JSON.stringify(response.headers)}`);
 			fireBalloon("NCT Poll-Error", "Server-Response: "+sCode, "");
@@ -269,7 +395,8 @@ function NCPollRegular() {
 		let pw = Buffer.from(ncpwd,'base64').toString('ascii');
 		let auth = "Basic " + Buffer.from(u2 + ":" + pw,'ascii').toString('base64');
 		if( u1.substr(u1.length - 1) == '\\') { u1 = u1.substr(0, u1.length - 1); }
-		let url = 'https://'+u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
+		let url = u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
+		if (url.indexOf("https://") < 0) {url = "https://" + url;}
 		//console.log("URL: "+ url);
 		ongoingPoll = 1;
 		let request = net.request({
@@ -280,7 +407,7 @@ function NCPollRegular() {
 			}
 		});
 		request.on('error', (error) => {
-			console.log(`${error}`);
+			console.log(`NCT-PollRegular ${error}`);
 			ongoingPoll = 0;
 				tray.destroy();
 				sendToTray("blue");
@@ -471,7 +598,7 @@ const trayMenuTemplate = [
 	},
 	{ label: 'configure', 
 		click() {
-			createConfigWindow();
+			createCredentialsWindow();
 		}
 	},
 	{ label: 'quit', 
