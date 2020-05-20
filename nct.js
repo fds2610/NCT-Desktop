@@ -8,6 +8,8 @@ const { net } = require('electron');
 const shell = require('electron').shell;
 const util = require('util');
 //const notifier = require('node-notifier');
+const os = require('os');
+const nativeImage = require('electron').nativeImage;
 
 //const electronVersion = require('electron-version')
 //electronVersion(function (err, v) {
@@ -187,8 +189,18 @@ function sendToTray(status) {
 	}	else {
 		iconPath = path.join(__dirname, 'talk1.png');
 	}
+
+	image = nativeImage.createFromPath(iconPath);
+
+	if (os.platform == 'darwin') {
+		image = image.resize({
+			width: 16,
+			height: 16
+		})
+	}
+
 	now = new Date();
-	tray = new Tray(iconPath);
+	tray = new Tray(image);
 	tray.setToolTip('Nextcloud Talk Notifier ' + status + " " + now);
 	const ctxMenu = Menu.buildFromTemplate(trayMenuTemplate);
 	tray.setContextMenu(ctxMenu);
