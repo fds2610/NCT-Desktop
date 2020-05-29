@@ -90,14 +90,33 @@ app.on('before-quit', function(event) {
 
 // IPC from renderer
 // has there been a change in config items ?
-ipc.on('configChange', (event, newcontent) => {
+ipc.on('configChange', (event, serverUrl) => {
+	let newcontent = "[Nextcloud-Talk]\nncurl:" + serverUrl;
+	newcontent = newcontent + "\nncuser:"+ ncuser+"\nncpwd:"+ncpwd+"\n";
 	writenewconfig(newcontent);
+});
+
+ipc.on('serverChange', (event, serverUrl) => {
+	let newcontent = "[Nextcloud-Talk]\nncurl:" + serverUrl;
+	ncurl = serverUrl;
+	newcontent = newcontent + "\nncuser:"+ ncuser+"\nncpwd:"+ncpwd+"\n";
+	writeNewConfig(newcontent);
 });
 
 // new Windows needs initial config items
 ipc.on('initConfigValues', (event, arg) => {
 	console.log(arg);
 	werte = ncurl+":"+ncuser+":"+ncpwd;
+		// werte = werte.concat(ncurl,"\n",ncuser,"\n",ncpwd);
+	console.log("Werte: "+werte);
+	event.returnValue = werte;
+	// ncurl=""; ncuser=""; ncpwd="";
+});
+
+// initServerUrl
+ipc.on('initServerUrl', (event, arg) => {
+	console.log(arg);
+	werte = ncurl;
 		// werte = werte.concat(ncurl,"\n",ncuser,"\n",ncpwd);
 	console.log("Werte: "+werte);
 	event.returnValue = werte;
@@ -134,6 +153,11 @@ function splitMyData(datastring) {
 	}
 }
 
+function openConfigWindow() {
+	createConfigWindow();
+	
+}
+
 function createCredentialsWindow() {
 	let url = Buffer.from(ncurl,'base64').toString('ascii') + "/index.php/login/v2" ;
 	if (url.indexOf("https://") < 0) {url = "https://" + url;}
@@ -144,7 +168,7 @@ function createCredentialsWindow() {
 		redirect: "follow"
 	});
 	request.on('error', (error) => {
-		console.log(`NCT-CredWin-Error: ${error}`);
+		console.log(`NCT-CredWin-Error: $ncurl - $url - ${error}`);
 		ongoingConfigPoll = 0;
 		console.log("AUTH POST 1 ended with error");
 	});
@@ -223,7 +247,7 @@ function pollToken () {
 					 'Content-Type': 'application/x-www-form-urlencoded',
 					 'Content-Length': postData.length,
 //					 'Referer': url2,
-					 'Host': host,
+//					 'Host': host,
 					 'User-Agent': 'NCT Desktop' + appVersion,
 					 'X-Requested-With': 'XMLHttpRequest' },
 				method: 'POST',
@@ -240,7 +264,9 @@ function pollToken () {
 							writeNewConfig(newcontent);
 							if (typeof pollTokenIntervall !== 'undefined') { if(!pollTokenIntervall._destroyed) {clearInterval(pollTokenIntervall);} }
 					} else {
+							
 							console.log("PullToken callback: " + error + " \n");
+							console.log("JSON ****** \n"+body);
 					}
 			}
 		);
@@ -279,7 +305,7 @@ function createConfigWindow() {
 
 	configWindow.on('close', function(){
 		configWindow=null;
-		myIntervall = setInterval(NCPollRegular, 10*1000);
+		createCredentialsWindow();
 	});
 }
 
@@ -598,7 +624,7 @@ const trayMenuTemplate = [
 	},
 	{ label: 'configure', 
 		click() {
-			createCredentialsWindow();
+			openConfigWindow();
 		}
 	},
 	{ label: 'quit', 

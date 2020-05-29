@@ -11,7 +11,7 @@
     "Nextcloud",
     "Talk"
   ],
-  "author": "Felix Schepmann and Mario Danic",
+  "author": "Felix Schepmann",
   "license": "CC-BY-SA-3.0",
   "dependencies": {
     "electron": "^8.2.0",

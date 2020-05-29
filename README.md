@@ -26,3 +26,5 @@ Lin x64 here: code.schepmann.de/NCT-Desktop/nct-desktop-linux-x64.zip
 regards, FDS
 
 btw: this is an ELECTRON-project. See https://www.electronjs.org/ for details.
+
+credentials to: e-alfred, Refhi, sb0stn, tiiiecherle
