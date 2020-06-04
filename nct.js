@@ -6,8 +6,11 @@ const Tray = electron.Tray;
 const {app, BrowserView, BrowserWindow, Menu, Notification} = electron;
 const { net } = require('electron');
 const requestlib = require('request');
+const shell = require('electron').shell;
 const util = require('util');
 //const notifier = require('node-notifier');
+const os = require('os');
+const nativeImage = require('electron').nativeImage;
 
 //const electronVersion = require('electron-version')
 //electronVersion(function (err, v) {
@@ -315,14 +318,18 @@ function createTalkWindow(url) {
 	if (url.indexOf("https://") < 0) {url = "https://" + url;}
 	if(DEBUG) { console.log("url to open: " + url); }
 	clear_Icon();
-	let win = new BrowserWindow({ width: 800, height: 600 });
-	win.on('closed', () => {
-		win = null;
-	});
-	let view = new BrowserView();
-	win.setBrowserView(view);
-	view.setBounds({ x: 0, y: 0, width: 800, height: 600 });
-	view.webContents.loadURL(url);
+	if (1 == 1) {
+		shell.openExternal(url);
+	} else {
+		let win = new BrowserWindow({ width: 800, height: 600 });
+		win.on('closed', () => {
+			win = null;
+		});
+		let view = new BrowserView();
+		win.setBrowserView(view);
+		view.setBounds({ x: 0, y: 0, width: 800, height: 600 });
+		view.webContents.loadURL(url);
+	}
 }
 
 function sendToTray(status) {
@@ -333,8 +340,18 @@ function sendToTray(status) {
 	}	else {
 		iconPath = path.join(__dirname, 'talk1.png');
 	}
+
+	image = nativeImage.createFromPath(iconPath);
+
+	if (os.platform == 'darwin') {
+		image = image.resize({
+			width: 16,
+			height: 16
+		})
+	}
+
 	now = new Date();
-	tray = new Tray(iconPath);
+	tray = new Tray(image);
 	tray.setToolTip('Nextcloud Talk Notifier ' + status + " " + now);
 	const ctxMenu = Menu.buildFromTemplate(trayMenuTemplate);
 	tray.setContextMenu(ctxMenu);
@@ -422,9 +439,11 @@ function NCPollRegular() {
 		let pw = Buffer.from(ncpwd,'base64').toString('ascii');
 		let auth = "Basic " + Buffer.from(u2 + ":" + pw,'ascii').toString('base64');
 		if( u1.substr(u1.length - 1) == '\\') { u1 = u1.substr(0, u1.length - 1); }
+
 		let url = u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
 		if (url.indexOf("https://") < 0) {url = "https://" + url;}
 		//console.log("URL: "+ url);
+
 		ongoingPoll = 1;
 		let request = net.request({
 			method: 'GET',
@@ -457,6 +476,7 @@ function NCPollRegular() {
 //				createConfigWindow();
 //				});
 			} else {
+				//console.debug("response: " +response);
 				if(trayerror){
 					tray.destroy();
 					sendToTray("green");
@@ -497,7 +517,7 @@ function getXMLnotifications(pollResponse) {
 			getLines=0;
 			let numb=al.slice(al.search(">")+1,-18).valueOf();
 			// console.debug(numb + " numb " + al.slice(al.search(">")+1,-18));
-			if(numb>nID){
+			if(numb>=nID){
 				nID=numb;
 				getLines=1;
 				newNot = 1;
@@ -518,12 +538,12 @@ function getXMLnotifications(pollResponse) {
 			}
 		}
 	}
-
+	//console.debug(i + " nID " + nID);
 	if(newNot == 1) {
 		newNot = 0;
 		tray.destroy();
 		sendToTray("newnot");
-		console.log("Balloon fired. ");
+		//console.log("Balloon fired. ");
 		fireBalloon(mSub, mMsg, mLink);
 	}
 }
