@@ -350,7 +350,7 @@ function sendToTray(status) {
 		})
 	}
 
-	now = new Date();
+	now = new Date().toISOString();
 	tray = new Tray(image);
 	tray.setToolTip('Nextcloud Talk Notifier ' + status + " " + now);
 	const ctxMenu = Menu.buildFromTemplate(trayMenuTemplate);
@@ -478,11 +478,12 @@ function NCPollRegular() {
 			} else {
 				//console.debug("response: " +response);
 				if(trayerror){
-					tray.destroy();
-					sendToTray("green");
+					//tray.destroy();
+					//sendToTray("green");
+					clear_Icon();
 					trayerror=false;
 				} else {
-					now = new Date();
+					now = new Date().toISOString();
 					tray.setToolTip('Nextcloud Talk Notifier OK ' + now);
 				}
 				//console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
