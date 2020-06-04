@@ -70,7 +70,7 @@ app.on('ready', function(){
 		// Change how to handle the file content
 		dataarr.forEach(splitMyData);
 		if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
-		mLink = Buffer.from(ncurl,'base64').toString('ascii');
+		mLink = Buffer.from(ncurl,'base64').toString('ascii') + "/index.php/apps/spreed/";
 		if (mLink.indexOf("https://") < 0) {mLink = "https://" + mLink;}
 		if(DEBUG) { console.log("url: "+mLink); }
 		NCPollOnce();
@@ -518,7 +518,7 @@ function getXMLnotifications(pollResponse) {
 			getLines=0;
 			let numb=al.slice(al.search(">")+1,-18).valueOf();
 			// if(DEBUG) { console.debug("numb: " + numb + " nID " + nID); }
-			if(numb>nID){
+			if(numb>nID && nID > 0){
 				nID=numb;
 				getLines=1;
 				newNot = 1;
