@@ -3,22 +3,52 @@
 <head>
 	<title>Config NCT Tray Notifier</title>
 	<meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline'" >
+	<style>
+		.invis {
+			display: none;
+		}
+		fieldset { 
+			border: none;
+			padding: 0;
+		}
+		ul { 
+			padding-inline-start: 0px;
+			margin: 0px;
+		}
+		li { list-style-type: none; }
+	</style>
 	<script>
 		const electron = require('electron');
 		const {ipcRenderer} = electron;
 		function changeVal(i,v){
 //			console.log(i + ' : ' + v);
 			const {ipcRenderer} = require('electron');
-			
 			let newcontent = btoa(document.getElementById('ncurl').value);
 			ipcRenderer.send('serverChange', newcontent );
-			console.log(newcontent);
+			console.log("serverChange: " + newcontent);
+		}
+		function changeOpt(i,v,c){
+			//console.log(i + ' : ' + v + ' : ' + c);
+			const {ipcRenderer} = require('electron');
+			//let newcontent = i+'_'+v+':'+c;
+			let newcontent = "";
+			var x = document.getElementsByName("option");
+			var i;
+			console.log(x.length);
+			for (i = 0; i < x.length; i++) {
+				if (x[i].type == "checkbox") {
+					console.log(i);
+					newcontent = newcontent + x[i].value + ':' + x[i].checked + "\n";
+				}
+			} 
+			ipcRenderer.send('optionChange', newcontent );
 		}
 		function connectServer() {
 			const {ipcRenderer} = require('electron');
 			ipcRenderer.send('connectServer', '' );
 			console.log("sent IPC");
 			myWinRef = window.self;
+			//alert(document.getElementById('ncurl').value);
 			myWinRef.close();
 		}
 	</script>
@@ -27,8 +57,33 @@
 <div>
 	<form id="configList">
 	<h3>Config Settings</h3>
-	<input type="text" id="ncurl" onchange="changeVal(this.id,this.value);" autofocus><label>&nbsp;Nextcloud hostname</label><br><br>
-	<input type="submit" id="connect" onclick="connectServer();">Verbinden...</input>
+	<label>&nbsp;Nextcloud base url</label>&nbsp;
+	<input type="text" size="30" id="ncurl" onchange="changeVal(this.id,this.value);" autofocus>&nbsp;
+	<input type="submit" id="connect" onclick="connectServer();" value="Connect..."></input><br><br>
+	<hr style="width:80%"></hr>
+  <h3>check your options</h3> 
+  <fieldset>
+    <ul>
+      <li class="invis"> 
+        <label>
+          <input type="checkbox" name="option" value="browser" onchange="changeOpt(this.name,this.value,this.checked);" >
+          use external default browser instead of built-in chromium
+        </label>
+      </li>
+      <li class="invis"> 
+        <label>
+           <input type="checkbox" name="option" value="base-url" onchange="changeOpt(this.name,this.value,this.checked);">
+           default to base-url instead of NC-Talk directly
+        </label>
+      </li>
+      <li>  
+        <label>
+          <input type="checkbox" name="option" value="debug" onchange="changeOpt(this.name,this.value,this.checked);">
+          activate debug mode
+        </label>
+      </li>
+    </ul> 
+  </fieldset> 
 	</form>
 	
 </div>

@@ -31,7 +31,7 @@ var notify;
 var jd;
 
 let ipc = electron.ipcMain;
-var ncurl="", ncuser="", ncpwd="";
+var ncurl="", ncuser="", ncpwd=""; ncoption="";
 var dataarr, werte;
 var iconPath = path.join(__dirname, 'Nextcloud.ico');
 var APQUIT = 0;
@@ -92,13 +92,14 @@ app.on('before-quit', function(event) {
 });
 
 // IPC from renderer
-// has there been a change in config items ?
-ipc.on('configChange', (event, serverUrl) => {
+// deprecated
+ipc.on('configChange', (event, serverUrl) => {  
 	let newcontent = "[Nextcloud-Talk]\nncurl:" + serverUrl;
 	newcontent = newcontent + "\nncuser:"+ ncuser+"\nncpwd:"+ncpwd+"\n";
 	writenewconfig(newcontent);
 });
 
+// new URL entered
 ipc.on('serverChange', (event, serverUrl) => {
 	let newcontent = "[Nextcloud-Talk]\nncurl:" + serverUrl;
 	ncurl = serverUrl;
@@ -106,12 +107,23 @@ ipc.on('serverChange', (event, serverUrl) => {
 	writeNewConfig(newcontent);
 });
 
-// new Windows needs initial config items
+// new options set/unset
+ipc.on('optionChange', (event, newoption) => {
+	
+	let newcontent = "[Nextcloud-Talk]\nncurl:" + ncurl;
+	newcontent = newcontent + "\nncuser:"+ ncuser+"\nncpwd:"+ncpwd+"\n";
+	newcontent = newcontent + newoption;
+	ncoption = newoption;
+	console.log("Config changed: " + newcontent);
+	writeNewConfig(newcontent);
+});
+
+// deprecated
 ipc.on('initConfigValues', (event, arg) => {
 	console.log(arg);
 	werte = ncurl+":"+ncuser+":"+ncpwd;
 		// werte = werte.concat(ncurl,"\n",ncuser,"\n",ncpwd);
-	console.log("Werte: "+werte);
+	console.log("WerteXXXXX: "+werte);
 	event.returnValue = werte;
 	// ncurl=""; ncuser=""; ncpwd="";
 });
@@ -126,6 +138,12 @@ ipc.on('initServerUrl', (event, arg) => {
 	// ncurl=""; ncuser=""; ncpwd="";
 });
 
+
+
+
+// createCredentialsWindow();
+
+
 // tools
 function writeNewConfig(content) {
 	fs.writeFile(configFilePath, content, (err) => {
@@ -137,12 +155,13 @@ function writeNewConfig(content) {
 	let dataarr = content.split("\n");
 	// Change how to handle the file content
 	dataarr.forEach(splitMyData);
-	if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
+	if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd+"options:"+ncoption); }
 	console.log("Save successfull: "&configFilePath);	
 }
 
 function splitMyData(datastring) {
 	keys =  datastring.split(":",2);
+	ncoption="";
 	switch(keys[0]) {
 		case 'ncurl':
 			ncurl = keys[1];
@@ -152,6 +171,9 @@ function splitMyData(datastring) {
 			break;
 		case 'ncpwd':
 			ncpwd = keys[1];
+			break;
+		default:
+			ncoption = ncoption+keys[0]+':'+keys[1]+"\n";
 			break;
 	}
 }
@@ -309,7 +331,7 @@ function createConfigWindow() {
 
 	configWindow.on('close', function(){
 		configWindow=null;
-		createCredentialsWindow();
+		// createCredentialsWindow();
 	});
 }
 
