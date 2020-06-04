@@ -428,7 +428,7 @@ function NCPollOnce() {
 
 function NCPollRegular() {
 	//console.debug(myIntervall);
-	if(DEBUG) { console.debug("NC Poll: newNot " + newNot); }
+	//if(DEBUG) { console.debug("NC Poll: newNot " + newNot); }
 	if (ongoingPoll > 0) {	
 		console.log("Abfrage \#"+ongoingPoll+" läuft noch... Poll verschoben."); 
 		ongoingPoll++;
@@ -516,7 +516,7 @@ function getXMLnotifications(pollResponse) {
 			//console.debug(i + ": " + al);
 			getLines=0;
 			let numb=al.slice(al.search(">")+1,-18).valueOf();
-			console.debug("numb: " + numb + " nID " + nID);
+			// if(DEBUG) { console.debug("numb: " + numb + " nID " + nID); }
 			if(numb>nID){
 				nID=numb;
 				getLines=1;
@@ -545,7 +545,7 @@ function getXMLnotifications(pollResponse) {
 		sendToTray("newnot");
 		//console.log("Balloon fired. ");
 		fireBalloon(mSub, mMsg, mLink);
-		console.debug(" newNot " + newNot);
+		// if(DEBUG) { console.debug(" newNot " + newNot); }
 	}
 }
 
