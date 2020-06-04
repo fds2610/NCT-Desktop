@@ -428,7 +428,7 @@ function NCPollOnce() {
 
 function NCPollRegular() {
 	//console.debug(myIntervall);
-
+	if(DEBUG) { console.debug("NC Poll: newNot " + newNot); }
 	if (ongoingPoll > 0) {	
 		console.log("Abfrage \#"+ongoingPoll+" läuft noch... Poll verschoben."); 
 		ongoingPoll++;
@@ -516,35 +516,36 @@ function getXMLnotifications(pollResponse) {
 			//console.debug(i + ": " + al);
 			getLines=0;
 			let numb=al.slice(al.search(">")+1,-18).valueOf();
-			// console.debug(numb + " numb " + al.slice(al.search(">")+1,-18));
-			if(numb>=nID){
+			console.debug("numb: " + numb + " nID " + nID);
+			if(numb>nID){
 				nID=numb;
 				getLines=1;
 				newNot = 1;
 				//console.debug(i + " get " + numb);
-			}
+			} 
 		} else {
 			if(getLines==1) {
 				if(al.search("<subject>") >= 0) {
 					mSub=al.slice(al.search(">")+1,-10);
-					console.log("Sub: " + mSub);
+					//console.log("Sub: " + mSub);
 				} else if (al.search("<link>") >= 0) {
 					mLink=al.slice(al.search(">")+1,-7);
-					console.log("Link: " + mLink);
+					//console.log("Link: " + mLink);
 				} else if (al.search("<message>") >= 0) {
 					mMsg=al.slice(al.search(">")+1,-10);
-					console.log("Msg: " + mMsg);
+					//console.log("Msg: " + mMsg);
 				}
 			}
 		}
 	}
-	//console.debug(i + " nID " + nID);
+	console.debug(" newNot " + newNot);
 	if(newNot == 1) {
 		newNot = 0;
 		tray.destroy();
 		sendToTray("newnot");
 		//console.log("Balloon fired. ");
 		fireBalloon(mSub, mMsg, mLink);
+		console.debug(" newNot " + newNot);
 	}
 }
 
@@ -560,6 +561,8 @@ function fireBalloon(subject, message, link) {
 		tray.on('balloon-click', function() {
 			//tray.removeBalloon();
 			console.log("Clicked the Balloon...");
+			tray.destroy();
+			sendToTray("green");
 			createTalkWindow(link);
 		});
 		tray.on('balloon-closed', function() {
@@ -578,6 +581,8 @@ function fireBalloon(subject, message, link) {
 		notify.show();
 		notify.on('click', function() {
 			console.log("Clicked the Notification...");
+			tray.destroy();
+			sendToTray("green");
 			createTalkWindow(link);
 		});
 	}
