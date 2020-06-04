@@ -18,6 +18,8 @@
 			const {ipcRenderer} = require('electron');
 			ipcRenderer.send('connectServer', '' );
 			console.log("sent IPC");
+			myWinRef = window.self;
+			myWinRef.close();
 		}
 	</script>
 </head>

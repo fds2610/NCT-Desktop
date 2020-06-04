@@ -180,6 +180,7 @@ function createCredentialsWindow() {
 		} else {
 			response.on('data', (chunk) => {
 				jd = JSON.parse(`${chunk}`);
+				console.log("Status: " + httpStatus);
 				console.log("Token: " + jd.poll.token);
 				console.log("EP: " + jd.poll.endpoint);
 				console.log("url: " + jd.login);
