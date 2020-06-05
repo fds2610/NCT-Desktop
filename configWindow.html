@@ -64,13 +64,13 @@
   <h3>check your options</h3> 
   <fieldset>
     <ul>
-      <li class="invis"> 
+      <li class="in-vis"> 
         <label>
           <input type="checkbox" name="option" value="browser" onchange="changeOpt(this.name,this.value,this.checked);" >
           use external default browser instead of built-in chromium
         </label>
       </li>
-      <li class="invis"> 
+      <li class="in-vis"> 
         <label>
            <input type="checkbox" name="option" value="base-url" onchange="changeOpt(this.name,this.value,this.checked);">
            default to base-url instead of NC-Talk directly
@@ -92,7 +92,17 @@
 		console.log("Neu laden!");
 		let arg = ipcRenderer.sendSync('initServerUrl', 'connection' );
 		console.log(arg);
-		document.getElementById('ncurl').value = atob(arg);
+		CV = arg.split(':');
+		document.getElementById('ncurl').value = atob(CV[0]);
+		// set options
+		var x = document.getElementsByName("option");
+		var i;
+		for (i = 0; i < x.length; i++) {
+			if (x[i].value == 'debug' && CV[1] == 'true') { x[i].checked = true ; }
+			if (x[i].value == 'browser' && CV[2] == 'true') { x[i].checked = true ; }
+			if (x[i].value == 'base-url' && CV[3] == 'true') { x[i].checked = true ; }
+		} 
+
 		//document.getElementById('ncuser').value = atob(CV[1]);
 		//document.getElementById('ncpwd').value = atob(CV[2]);
 
