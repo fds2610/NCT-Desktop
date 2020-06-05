@@ -10,9 +10,16 @@
 //			console.log(i + ' : ' + v);
 			const {ipcRenderer} = require('electron');
 			
-			let newcontent = "[Nextcloud-Talk]\n" + 'ncurl:' + btoa(document.getElementById('ncurl').value) + '\nncuser:' + btoa(document.getElementById('ncuser').value) + '\nncpwd:' + btoa(document.getElementById('ncpwd').value) + "\n";
-			ipcRenderer.send('configChange', newcontent );
+			let newcontent = btoa(document.getElementById('ncurl').value);
+			ipcRenderer.send('serverChange', newcontent );
 			console.log(newcontent);
+		}
+		function connectServer() {
+			const {ipcRenderer} = require('electron');
+			ipcRenderer.send('connectServer', '' );
+			console.log("sent IPC");
+			myWinRef = window.self;
+			myWinRef.close();
 		}
 	</script>
 </head>
@@ -20,21 +27,19 @@
 <div>
 	<form id="configList">
 	<h3>Config Settings</h3>
-	<input type="text" id="ncurl" onchange="changeVal(this.id,this.value);" autofocus><label>&nbsp;Nextcloud hostname ( without https://)</label><br><br>
-	<input type="text" id="ncuser" onchange="changeVal(this.id,this.value);"><label>&nbsp;Nextcloud UserID</label><br><br>
-	<input type="password" id="ncpwd" onchange="changeVal(this.id,this.value);"><label>&nbsp;Nextcloud Password</label><br><br>
+	<input type="text" id="ncurl" onchange="changeVal(this.id,this.value);" autofocus><label>&nbsp;Nextcloud hostname</label><br><br>
+	<input type="submit" id="connect" onclick="connectServer();">Verbinden...</input>
 	</form>
 	
 </div>
 <script>
 
 		console.log("Neu laden!");
-		let arg = ipcRenderer.sendSync('initConfigValues', 'connection' );
-		var CV = arg.split(":");
+		let arg = ipcRenderer.sendSync('initServerUrl', 'connection' );
 		console.log(arg);
-		document.getElementById('ncurl').value = atob(CV[0]);
-		document.getElementById('ncuser').value = atob(CV[1]);
-		document.getElementById('ncpwd').value = atob(CV[2]);
+		document.getElementById('ncurl').value = atob(arg);
+		//document.getElementById('ncuser').value = atob(CV[1]);
+		//document.getElementById('ncpwd').value = atob(CV[2]);
 
 </script>
 </body>
