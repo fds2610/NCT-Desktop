@@ -566,12 +566,16 @@ function getXMLnotifications(pollResponse) {
 			//console.debug(i + ": " + al);
 			getLines=0;
 			let numb=al.slice(al.search(">")+1,-18).valueOf();
-			// if(DEBUG) { console.debug("numb: " + numb + " nID " + nID); }
-			if(numb>nID && nID > 0){
+			if(DEBUG) { console.debug("numb: " + numb + " nID " + nID); }
+			if(numb>nID){
+				if(nID > 0) {
 				nID=numb;
 				getLines=1;
 				newNot = 1;
 				//console.debug(i + " get " + numb);
+				} else {
+					nID = numb;
+				}
 			} 
 		} else {
 			if(getLines==1) {
