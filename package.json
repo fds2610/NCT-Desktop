@@ -19,10 +19,16 @@
     "request": "^2.88.2"
   },
   "devDependencies": {
+    "electron-builder": "^22.7.0",
     "electron-packager": "^14.2.1"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/fds2610/NCT-Desktop.git"
-  }
+  },
+	"scripts:": {
+		"postinstall": "electron-builder install-app-deps",
+		"build": "electron-builder --mac --windows --linux",
+		"release": "electron-builder --mac --windows --linux --publish always"
+	}
 }
