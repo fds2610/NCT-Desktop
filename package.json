@@ -26,7 +26,7 @@
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
-    "build": "electron-builder --windows",
+    "build": "electron-builder --windows --publish always",
     "release": "electron-builder --windows --publish always",
     "start": "electron ."
   }
