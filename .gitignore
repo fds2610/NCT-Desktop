@@ -1,5 +1,5 @@
 /releases/
 /node_modules/
-/releases/
+/dist/
 config.ini
 config2.ini

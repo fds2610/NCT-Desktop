@@ -4,9 +4,6 @@
   "productName": "NCT Notifier",
   "description": "Nextcloud Talk System Tray 4 Windows",
   "main": "nct.js",
-  "scripts": {
-    "start": "electron ."
-  },
   "keywords": [
     "Nextcloud",
     "Talk"
@@ -14,11 +11,11 @@
   "author": "Felix Schepmann",
   "license": "CC-BY-SA-3.0",
   "dependencies": {
-    "electron": "^8.2.0",
     "electron-version": "^2.0.1",
     "request": "^2.88.2"
   },
   "devDependencies": {
+    "electron": "^8.2.0",
     "electron-builder": "^22.7.0",
     "electron-packager": "^14.2.1"
   },
@@ -26,9 +23,10 @@
     "type": "git",
     "url": "git://github.com/fds2610/NCT-Desktop.git"
   },
-	"scripts:": {
+	"scripts": {
 		"postinstall": "electron-builder install-app-deps",
-		"build": "electron-builder --mac --windows --linux",
-		"release": "electron-builder --mac --windows --linux --publish always"
+		"build": "electron-builder --windows --linux",
+		"release": "electron-builder --windows --linux --publish always",
+		"start": "electron ."
 	}
 }
