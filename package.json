@@ -23,10 +23,10 @@
     "type": "git",
     "url": "git://github.com/fds2610/NCT-Desktop.git"
   },
-	"scripts": {
-		"postinstall": "electron-builder install-app-deps",
-		"build": "electron-builder --windows --linux",
-		"release": "electron-builder --windows --linux --publish always",
-		"start": "electron ."
-	}
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "build": "electron-builder --windows --linux",
+    "release": "electron-builder --windows --linux --publish always",
+    "start": "electron ."
+  }
 }
