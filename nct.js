@@ -18,11 +18,11 @@ const nativeImage = require('electron').nativeImage;
 //});
 
 // custom constants
-const DEBUG = (app.isPackaged) ? false:true;
 const configFilePath = path.join(__dirname, 'config.ini');
 const setIntervalPromise = util.promisify(setInterval);
 
 // custom variables
+let DEBUG = (app.isPackaged) ? false:true;
 let mainWindow;
 let addWindow;
 var tray = null;
@@ -31,7 +31,7 @@ var notify;
 var jd;
 
 let ipc = electron.ipcMain;
-var ncurl="", ncuser="", ncpwd="";
+var ncurl="", ncuser="", ncpwd=""; ncoption=""; ncbrowser=""; ncbaseurl="";
 var dataarr, werte;
 var iconPath = path.join(__dirname, 'Nextcloud.ico');
 var APQUIT = 0;
@@ -70,7 +70,8 @@ app.on('ready', function(){
 		// Change how to handle the file content
 		dataarr.forEach(splitMyData);
 		if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
-		mLink = Buffer.from(ncurl,'base64').toString('ascii') + "/index.php/apps/spreed/";
+		mLink = Buffer.from(ncurl,'base64').toString('ascii');
+		if (ncbaseurl) { mLink = mLink + "/index.php/apps/spreed/"; }
 		if (mLink.indexOf("https://") < 0) {mLink = "https://" + mLink;}
 		if(DEBUG) { console.log("url: "+mLink); }
 		NCPollOnce();
@@ -92,13 +93,14 @@ app.on('before-quit', function(event) {
 });
 
 // IPC from renderer
-// has there been a change in config items ?
-ipc.on('configChange', (event, serverUrl) => {
+// deprecated
+ipc.on('configXXXChange', (event, serverUrl) => {  
 	let newcontent = "[Nextcloud-Talk]\nncurl:" + serverUrl;
 	newcontent = newcontent + "\nncuser:"+ ncuser+"\nncpwd:"+ncpwd+"\n";
 	writenewconfig(newcontent);
 });
 
+// new URL entered
 ipc.on('serverChange', (event, serverUrl) => {
 	let newcontent = "[Nextcloud-Talk]\nncurl:" + serverUrl;
 	ncurl = serverUrl;
@@ -106,12 +108,29 @@ ipc.on('serverChange', (event, serverUrl) => {
 	writeNewConfig(newcontent);
 });
 
-// new Windows needs initial config items
-ipc.on('initConfigValues', (event, arg) => {
+// connect new server url
+ipc.on('connectServer', (event, s) => {
+	createCredentialsWindow();
+});
+
+// new options set/unset
+ipc.on('optionChange', (event, newoption) => {
+	
+	let newcontent = "[Nextcloud-Talk]\nncurl:" + ncurl;
+	newcontent = newcontent + "\nncuser:"+ ncuser+"\nncpwd:"+ncpwd+"\n";
+	newcontent = newcontent + newoption;
+	ncoption = newoption;
+	console.log("Config changed: " + newcontent);
+	writeNewConfig(newcontent);
+	if (DEBUG) { console.log("Debug on"); } else { console.log("Debug off"); }
+});
+
+// deprecated
+ipc.on('initXXXConfigValues', (event, arg) => {
 	console.log(arg);
 	werte = ncurl+":"+ncuser+":"+ncpwd;
 		// werte = werte.concat(ncurl,"\n",ncuser,"\n",ncpwd);
-	console.log("Werte: "+werte);
+	console.log("WerteXXXXX: "+werte);
 	event.returnValue = werte;
 	// ncurl=""; ncuser=""; ncpwd="";
 });
@@ -119,12 +138,16 @@ ipc.on('initConfigValues', (event, arg) => {
 // initServerUrl
 ipc.on('initServerUrl', (event, arg) => {
 	console.log(arg);
-	werte = ncurl;
+	werte = ncurl+":"+DEBUG+":"+ncbrowser+":"+ncbaseurl;
 		// werte = werte.concat(ncurl,"\n",ncuser,"\n",ncpwd);
 	console.log("Werte: "+werte);
 	event.returnValue = werte;
 	// ncurl=""; ncuser=""; ncpwd="";
 });
+
+//
+// end-of-main
+//
 
 // tools
 function writeNewConfig(content) {
@@ -137,12 +160,13 @@ function writeNewConfig(content) {
 	let dataarr = content.split("\n");
 	// Change how to handle the file content
 	dataarr.forEach(splitMyData);
-	if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd); }
+	if(DEBUG) { console.log("1: "+ncurl+"2: "+ncuser+"3: "+ncpwd+"options:"+ncoption); }
 	console.log("Save successfull: "&configFilePath);	
 }
 
 function splitMyData(datastring) {
 	keys =  datastring.split(":",2);
+	ncoption="";
 	switch(keys[0]) {
 		case 'ncurl':
 			ncurl = keys[1];
@@ -153,10 +177,25 @@ function splitMyData(datastring) {
 		case 'ncpwd':
 			ncpwd = keys[1];
 			break;
+		case 'debug':
+			DEBUG = (keys[1] == 'true') ? true:false;
+			ncoption = ncoption+keys[0]+':'+keys[1]+"\n";
+			break;
+		case 'browser':
+			ncbrowser = (keys[1] == 'true') ? true:false;
+			ncoption = ncoption+keys[0]+':'+keys[1]+"\n";
+			break;
+		case 'base-url':
+			ncbaseurl = (keys[1] == 'true') ? true:false;
+			mLink = Buffer.from(ncurl,'base64').toString('ascii');
+			if (ncbaseurl) { mLink = mLink + "/index.php/apps/spreed/"; }
+			ncoption = ncoption+keys[0]+':'+keys[1]+"\n";
+			break;
 	}
 }
 
 function openConfigWindow() {
+	if(DEBUG) { console.log('Fkt: openConfigWindow()'); }
 	createConfigWindow();
 	
 }
@@ -187,45 +226,50 @@ function createCredentialsWindow() {
 				console.log("Token: " + jd.poll.token);
 				console.log("EP: " + jd.poll.endpoint);
 				console.log("url: " + jd.login);
-				
-				cWWidth = (DEBUG) ? 1200 : 600;
-				cWHeight = (DEBUG) ? 800 : 800;
-				configWindow = new BrowserWindow({
-					width: cWWidth,
-					height: cWHeight,
-					modal: true,
-					title: 'Config NCT Tray',
-					webPreferences: {
-						nodeIntegration: true
-					}
-				});
 
-				configWindow.loadURL(jd.login); 
-				if (mainMenuTemplate) {
-					const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
-					Menu.setApplicationMenu(mainMenu);
+				if (ncbrowser) {
+					shell.openExternal(jd.login);
 				} else {
-					Menu.setApplicationMenu(null);
-				};
-				//configWindow.toggleDevTools();
-				if(DEBUG) { configWindow.webContents.openDevTools(); }
 
-				configWindow.on('close', function(){
-					configWindow=null;
-					if (typeof pollTokenIntervall !== 'undefined') { if(!pollTokenIntervall._destroyed) {clearInterval(pollTokenIntervall);} }
-				});
-				
-				//
-				// request({ url: url, method: 'PUT', json: {foo: "bar", woo: "car"}}, callback)
-				//
-				// https://nodejs.dev/make-an-http-post-request-using-nodejs
-				//
-				if(!myIntervall._destroyed) {clearInterval(myIntervall);}
-				pollTokenIntervall = setInterval(pollToken, 2*1000);
+					cWWidth = (DEBUG) ? 1200 : 600;
+					cWHeight = (DEBUG) ? 800 : 800;
+					configWindow = new BrowserWindow({
+						width: cWWidth,
+						height: cWHeight,
+						modal: true,
+						title: 'Config NCT Tray',
+						webPreferences: {
+							nodeIntegration: true
+						}
+					});
 
+					configWindow.loadURL(jd.login); 
+					if (mainMenuTemplate) {
+						const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
+						Menu.setApplicationMenu(mainMenu);
+					} else {
+						Menu.setApplicationMenu(null);
+					};
+					//configWindow.toggleDevTools();
+					if(DEBUG) { configWindow.webContents.openDevTools(); }
 
+					configWindow.on('close', function(){
+						configWindow=null;
+						if (typeof pollTokenIntervall !== 'undefined') { if(!pollTokenIntervall._destroyed) {clearInterval(pollTokenIntervall);} }
+					});
+					
+					//
+					// request({ url: url, method: 'PUT', json: {foo: "bar", woo: "car"}}, callback)
+					//
+					// https://nodejs.dev/make-an-http-post-request-using-nodejs
+					//
+					if(!myIntervall._destroyed) {clearInterval(myIntervall);}
+					pollTokenIntervall = setInterval(pollToken, 2*1000);
+				}
 			});
 		}
+		
+		
 	});
 	request.end();
 
@@ -279,6 +323,7 @@ function pollToken () {
 }
 
 function createConfigWindow() {
+	if(DEBUG) { console.log('Fkt: createConfigWindow()'); }
 	if(!myIntervall._destroyed) {clearInterval(myIntervall);}
 	cWWidth = (DEBUG) ? 800 : 400;
 	cWHeight = (DEBUG) ? 600 : 300;
@@ -309,16 +354,18 @@ function createConfigWindow() {
 
 	configWindow.on('close', function(){
 		configWindow=null;
-		createCredentialsWindow();
+		// createCredentialsWindow();
 	});
 }
 
 function createTalkWindow(url) {
+	if(DEBUG) { console.log('Fkt: createTalkWindow()'); }
+	if(DEBUG) { console.log('ncbrowser: ' + ncbrowser); }
 	if (url == "") { url = mLink; }
 	if (url.indexOf("https://") < 0) {url = "https://" + url;}
 	if(DEBUG) { console.log("url to open: " + url); }
 	clear_Icon();
-	if (1 == 1) {
+	if (ncbrowser) {
 		shell.openExternal(url);
 	} else {
 		let win = new BrowserWindow({ width: 800, height: 600 });
@@ -333,6 +380,7 @@ function createTalkWindow(url) {
 }
 
 function sendToTray(status) {
+	if(DEBUG) { console.log('Fkt: sendToTray()'); }
 	if(status == "green") {
 		iconPath = path.join(__dirname, 'talk2.png');
 	} else if (status == "newnot") {
@@ -374,6 +422,7 @@ function clear_Icon () {
 }
 
 function NCPollOnce() {
+	if(DEBUG) { console.log('Fkt: NCPollOnce()'); }
 	let u1 = Buffer.from(ncurl,'base64').toString('ascii');
 	let u2 = Buffer.from(ncuser,'base64').toString('ascii');
 	let pw = Buffer.from(ncpwd,'base64').toString('ascii');
@@ -502,7 +551,7 @@ function NCPollRegular() {
 }
 
 function getXMLnotifications(pollResponse) {
-
+	if(DEBUG) { console.log('Fkt: getXMLnotifications()'); }
 	// parse it the hard way...
 	pollResponse.replace("\r", "");
 	let arrLines = pollResponse.split("\n");
@@ -517,12 +566,16 @@ function getXMLnotifications(pollResponse) {
 			//console.debug(i + ": " + al);
 			getLines=0;
 			let numb=al.slice(al.search(">")+1,-18).valueOf();
-			// if(DEBUG) { console.debug("numb: " + numb + " nID " + nID); }
-			if(numb>nID && nID > 0){
+			if(DEBUG) { console.debug("numb: " + numb + " nID " + nID); }
+			if(numb>nID){
+				if(nID > 0) {
 				nID=numb;
 				getLines=1;
 				newNot = 1;
 				//console.debug(i + " get " + numb);
+				} else {
+					nID = numb;
+				}
 			} 
 		} else {
 			if(getLines==1) {
@@ -539,7 +592,7 @@ function getXMLnotifications(pollResponse) {
 			}
 		}
 	}
-	console.debug(" newNot " + newNot);
+	if(DEBUG) { console.debug("newNot " + newNot); }
 	if(newNot == 1) {
 		newNot = 0;
 		tray.destroy();
