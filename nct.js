@@ -31,7 +31,7 @@ var notify;
 var jd;
 
 let ipc = electron.ipcMain;
-var ncurl="", ncuser="", ncpwd=""; ncoption=""; ncbrowser=""; ncbaseurl="";
+var ncurl="", ncuser="", ncpwd=""; ncoption=""; ncbrowser=""; ncbaseurl=""; nontalk=false;
 var dataarr, werte;
 var iconPath = path.join(__dirname, 'Nextcloud.ico');
 var APQUIT = 0;
@@ -138,7 +138,7 @@ ipc.on('initXXXConfigValues', (event, arg) => {
 // initServerUrl
 ipc.on('initServerUrl', (event, arg) => {
 	console.log(arg);
-	werte = ncurl+":"+DEBUG+":"+ncbrowser+":"+ncbaseurl;
+	werte = ncurl+":"+DEBUG+":"+ncbrowser+":"+ncbaseurl+":"+nontalk;
 		// werte = werte.concat(ncurl,"\n",ncuser,"\n",ncpwd);
 	console.log("Werte: "+werte);
 	event.returnValue = werte;
@@ -177,6 +177,10 @@ function splitMyData(datastring) {
 		case 'ncpwd':
 			ncpwd = keys[1];
 			break;
+		case 'nontalk':
+			nontalk = (keys[1] == 'true') ? true:false;
+			ncoption = ncoption+keys[0]+':'+keys[1]+"\n";
+			break;
 		case 'debug':
 			DEBUG = (keys[1] == 'true') ? true:false;
 			ncoption = ncoption+keys[0]+':'+keys[1]+"\n";
@@ -192,6 +196,7 @@ function splitMyData(datastring) {
 			ncoption = ncoption+keys[0]+':'+keys[1]+"\n";
 			break;
 	}
+	if(DEBUG) { console.log("Options read from config.ini: "+ncoption);}
 }
 
 function openConfigWindow() {
@@ -578,7 +583,23 @@ function getXMLnotifications(pollResponse) {
 				}
 			} 
 		} else {
+			if(DEBUG && getLines) { console.debug("newNot: "+newNot+" al: "+al); }
 			if(getLines==1) {
+				if(al.search("<app>") >= 0) {
+					let mNontalk = al.slice(al.search(">")+1,-6);
+					if(DEBUG) { console.log("App: " + mNontalk + " nontalk: " + nontalk); }
+					if(mNontalk != "spreed") {
+						if(nontalk) {
+							getLines = 0;
+							newNot = 0;
+						} else {
+							mSub = "Nachricht von Nextcloud " + mNontalk;
+							mMsg = "ID: " +nID;
+							mLink = "";
+							getLines = 0;
+						}
+					}
+				}
 				if(al.search("<subject>") >= 0) {
 					mSub=al.slice(al.search(">")+1,-10);
 					//console.log("Sub: " + mSub);
@@ -604,6 +625,10 @@ function getXMLnotifications(pollResponse) {
 }
 
 function fireBalloon(subject, message, link) {
+	if(DEBUG) { console.log('Fkt: fireBalloon()'); }
+	if(DEBUG) { console.log("sub: "+subject+" msg: "+message);}
+	let clickit = false;
+	if (subject.search("NCT Poll-Error") >= 0) { clickit = true; }
 	if(process.platform == "win32") {
 		newNot = 0;
 		console.log("Balloon fired. ");
@@ -612,13 +637,17 @@ function fireBalloon(subject, message, link) {
 		trayBalloonOptions.content=message; // +"\n"+mLink;
 		trayBalloonOptions.icon=iconPath;
 		tray.displayBalloon(trayBalloonOptions);
-		tray.on('balloon-click', function() {
-			//tray.removeBalloon();
-			console.log("Clicked the Balloon...");
-			tray.destroy();
-			sendToTray("green");
-			createTalkWindow(link);
-		});
+		if(clickit) {
+			tray.on('balloon-click', function() {
+				//tray.removeBalloon();
+				console.log("Clicked the Balloon...");
+				tray.destroy();
+				sendToTray("green");
+				createTalkWindow(link);
+			});
+		} else {
+			sendToTray("blue");
+		}
 		tray.on('balloon-closed', function() {
 			//tray.removeBalloon();
 			console.log("Balloon closed...");

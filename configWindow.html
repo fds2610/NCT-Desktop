@@ -78,6 +78,12 @@
       </li>
       <li>  
         <label>
+          <input type="checkbox" name="option" value="nontalk" onchange="changeOpt(this.name,this.value,this.checked);">
+          limit notifications to Nextcloud Talk only
+        </label>
+      </li>
+      <li>  
+        <label>
           <input type="checkbox" name="option" value="debug" onchange="changeOpt(this.name,this.value,this.checked);">
           activate debug mode
         </label>
@@ -101,6 +107,7 @@
 			if (x[i].value == 'debug' && CV[1] == 'true') { x[i].checked = true ; }
 			if (x[i].value == 'browser' && CV[2] == 'true') { x[i].checked = true ; }
 			if (x[i].value == 'base-url' && CV[3] == 'true') { x[i].checked = true ; }
+			if (x[i].value == 'nontalk' && CV[4] == 'true') { x[i].checked = true ; }
 		} 
 
 		//document.getElementById('ncuser').value = atob(CV[1]);
