@@ -21,7 +21,7 @@ jobs:
 
       - name: Debug
         run:
-          print (github.ref)
+          echo "::debug::"+github.ref
           
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
