@@ -422,6 +422,9 @@ function sendToTray(status) {
 
 function clear_Icon () {
 	tray.destroy();
+	if(myIntervall._destroyed) {
+		myIntervall = setInterval(NCPollRegular, 10*1000);
+	}
 	sendToTray("green");
 	console.log("Trayicon re-set. ");
 }
@@ -518,7 +521,7 @@ function NCPollRegular() {
 			if(DEBUG) { console.log(`STATUS: ${response.statusCode}`); }
 			sCode = `${response.statusCode}`;
 			if (sCode != '200') {
-				clearInterval(myIntervall);
+				//clearInterval(myIntervall);
 				fireBalloon("NCT Poll-Error", "Server-Response: "+sCode+"\nclick to open config", "");
 //				let trayBalloonOptions = new Object;
 //				trayBalloonOptions.title="NCT Poll-Error";
