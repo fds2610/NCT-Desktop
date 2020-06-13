@@ -2,7 +2,12 @@
 <html lang="de">
 <head>
 	<title>Config NCT Tray Notifier</title>
-	<meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline'" >
+	<meta charset="UTF-8">
+	<!-- meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline'" -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="fonts/Linearicons-Free-v1.0.0/icon-font.min.css">
+	<link rel="stylesheet" type="text/css" href="css/main.css">
 	<style>
 		.invis {
 			display: none;
@@ -54,45 +59,51 @@
 	</script>
 </head>
 <body>
-<div>
+<div class="container-contact100">
+<div class="wrap-contact100">
 	<form id="configList">
-	<h3>Config Settings</h3>
-	<label>&nbsp;Nextcloud base url</label>&nbsp;
-	<input type="text" size="30" id="ncurl" onchange="changeVal(this.id,this.value);" autofocus>&nbsp;
-	<input type="submit" id="connect" onclick="connectServer();" value="Connect..."></input><br><br>
-	<hr style="width:80%"></hr>
-  <h3>check your options</h3> 
+	
+	<div class="wrap-input100 validate-input" data-validate="URL is required">
+		<input  class="input100" type="text" size="30" id="ncurl" onchange="changeVal(this.id,this.value);" placeholder="URL">
+		<label class="label-input100" for="ncurl">
+			<span class="lnr lnr-cloud-sync"></span>
+		</label>
+	</div>
+	<input class="contact100-form-btn" type="submit" id="connect" onclick="connectServer();" value="Connect..."></input><br><br>
+
+  
   <fieldset>
     <ul>
-      <li class="in-vis"> 
-        <label>
-          <input type="checkbox" name="option" value="browser" onchange="changeOpt(this.name,this.value,this.checked);" >
-          use external default browser instead of built-in chromium
+      <li class="in-vis contact100-form-checkbox"> 
+				<input class="input-checkbox100" id="ckb1" type="checkbox" name="option" value="browser" onchange="changeOpt(this.name,this.value,this.checked);" >
+				<label class="label-checkbox100" for="ckb1">
+				use external default browser instead of built-in chromium
         </label>
       </li>
-      <li class="in-vis"> 
-        <label>
-           <input type="checkbox" name="option" value="base-url" onchange="changeOpt(this.name,this.value,this.checked);">
-           default to NC-Talk instead of base URL
+      <li class="in-vis contact100-form-checkbox"> 
+        <input class="input-checkbox100" id="ckb2" type="checkbox" name="option" value="base-url" onchange="changeOpt(this.name,this.value,this.checked);">
+        <label class="label-checkbox100" for="ckb2">
+          default to NC-Talk instead of base URL
         </label>
       </li>
-      <li>  
-        <label>
-          <input type="checkbox" name="option" value="nontalk" onchange="changeOpt(this.name,this.value,this.checked);">
+      <li class="in-vis contact100-form-checkbox">  
+        <input class="input-checkbox100" id="ckb3" type="checkbox" name="option" value="nontalk" onchange="changeOpt(this.name,this.value,this.checked);">
+        <label class="label-checkbox100" for="ckb3">
           limit notifications to Nextcloud Talk only
         </label>
       </li>
-      <li>  
-        <label>
-          <input type="checkbox" name="option" value="debug" onchange="changeOpt(this.name,this.value,this.checked);">
+      <li class="in-vis contact100-form-checkbox">  
+        <input class="input-checkbox100" id="ckb4" type="checkbox" name="option" value="debug" onchange="changeOpt(this.name,this.value,this.checked);">
+        <label class="label-checkbox100" for="ckb4">
           activate debug mode
         </label>
       </li>
     </ul> 
   </fieldset> 
 	</form>
-	
+</div>	
 </div>
+<script src="form.js"></script>
 <script>
 
 		console.log("Neu laden!");

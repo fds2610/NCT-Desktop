@@ -330,8 +330,8 @@ function pollToken () {
 function createConfigWindow() {
 	if(DEBUG) { console.log('Fkt: createConfigWindow()'); }
 	if(!myIntervall._destroyed) {clearInterval(myIntervall);}
-	cWWidth = (DEBUG) ? 800 : 400;
-	cWHeight = (DEBUG) ? 600 : 300;
+	cWWidth = (DEBUG) ? 1000 : 600;
+	cWHeight = (DEBUG) ? 555 : 555;
 	configWindow = new BrowserWindow({
 		width: cWWidth,
 		height: cWHeight,
@@ -436,6 +436,7 @@ function NCPollOnce() {
 	let pw = Buffer.from(ncpwd,'base64').toString('ascii');
 	let auth = "Basic " + Buffer.from(u2 + ":" + pw,'ascii').toString('base64');
 	if( u1.substr(u1.length - 1) == '\\') { u1 = u1.substr(0, u1.length - 1); }
+	// TODO: remove leading '/' if trailing slash exist in u1 
 	let url = u1+'/ocs/v2.php/apps/notifications/api/v2/notifications';
 	console.log("url: "+url+" Indexof: "+url.indexOf("https://"));
 	if (url.indexOf("https://") < 0) {url = "https://" + url;}
