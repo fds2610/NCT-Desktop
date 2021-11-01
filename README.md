@@ -1,7 +1,7 @@
-## NCT-Desktop
+# NCT-Desktop
 #
-# this will remain unmaintained as NC client provides theese features
-# since 2021
+## this will remain unmaintained as NC client provides theese features
+## since 2021
 
 Desktop-App for notifying Nextcloud-Talk Events
 
