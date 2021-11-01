@@ -1,4 +1,8 @@
-# NCT-Desktop
+## NCT-Desktop
+#
+# this will remain unmaintained as NC client provides theese features
+# since 2021
+
 Desktop-App for notifying Nextcloud-Talk Events
 
 This App installs a Tray-Icon and on regular base pulls the NC server
@@ -27,4 +31,4 @@ regards, FDS
 
 btw: this is an ELECTRON-project. See https://www.electronjs.org/ for details.
 
-credentials to: e-alfred, Refhi, sb0stn, tiiiecherle
+credits to: e-alfred, Refhi, sb0stn, tiiiecherle
